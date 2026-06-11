@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import sys
+import os
 import fugashi
 import ipadic
 import re
 import jaconv
 import unicodedata
+import argparse
 
 
 IpadicFeatures = fugashi.create_feature_wrapper(
@@ -82,7 +83,7 @@ def split_okurigana(text, hiragana):
                         break
 
 
-def split_furigana(text):
+def split_furigana(text, debug=False):
     ret = []
     for word in tagger(text):
         origin = word.surface
@@ -90,6 +91,10 @@ def split_furigana(text):
             continue
 
         if any(is_kanji(ch) for ch in origin):
+            if debug:
+                print(f'[DEBUG] {origin}')
+                print(f'[DEBUG]   {word.feature}')
+
             kana = word.feature.kana
             if kana:
                 hiragana = jaconv.kata2hira(kana)
@@ -102,8 +107,8 @@ def split_furigana(text):
     return ret
 
 
-def print_html(text):
-    for pair in split_furigana(text):
+def print_html(text, **kwargs):
+    for pair in split_furigana(text, **kwargs):
         if len(pair)==2:
             kanji, hira = pair
             print("<ruby><rb>{0}</rb><rt>{1}</rt></ruby>".
@@ -113,8 +118,8 @@ def print_html(text):
     print('')
 
 
-def print_plaintext(text):
-    for pair in split_furigana(text):
+def print_plaintext(text, **kwargs):
+    for pair in split_furigana(text, **kwargs):
         if len(pair)==2:
             kanji,hira = pair
             print("%s(%s)" % (kanji,hira), end='')
@@ -124,8 +129,23 @@ def print_plaintext(text):
 
 
 def main():
-    text = sys.argv[1]
-    print_html(text)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--html', action='store_true')
+    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('input')
+    args = parser.parse_args()
+
+    if os.path.isfile(args.input):
+        with open(args.input, 'r') as f:
+            text = f.read()
+    else:
+        text = args.input
+
+    for line in text.split('\n'):
+        if args.html:
+            print_html(line, debug=args.debug)
+        else:
+            print_plaintext(line, debug=args.debug)
 
 
 if __name__ == '__main__':
