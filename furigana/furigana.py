@@ -83,7 +83,7 @@ def split_okurigana(text, hiragana):
                         break
 
 
-def split_furigana(text, debug=False):
+def split_furigana(text, romaji=False, debug=False):
     ret = []
     for word in tagger(text):
         origin = word.surface
@@ -111,6 +111,7 @@ def split_furigana(text, debug=False):
 
 def convert(text, format, **kwargs):
     furigana_result = ''
+    hiragana_result = ''
 
     for pair in split_furigana(text, **kwargs):
         if len(pair) == 2:
@@ -123,7 +124,12 @@ def convert(text, format, **kwargs):
             hira = pair[0]
             furigana_result += hira
 
+        hiragana_result += ' ' + hira
+
+    romaji_result = jaconv.kata2alphabet(hiragana_result)
+
     print(furigana_result)
+    print(romaji_result)
     print()
 
 
@@ -131,6 +137,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--html', action='store_true')
     parser.add_argument('-d', '--debug', action='store_true')
+    parser.add_argument('-r', '--romaji', action='store_true')
     parser.add_argument('input')
     args = parser.parse_args()
 
@@ -145,7 +152,7 @@ def main():
             format = 'html'
         else:
             format = 'text'
-        convert(line, format, debug=args.debug)
+        convert(line, format, romaji=args.romaji, debug=args.debug)
 
 
 if __name__ == '__main__':
