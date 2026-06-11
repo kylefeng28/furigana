@@ -1,4 +1,7 @@
 # furigana
+
+Fork of [MikimotoH/furigana](https://github.com/MikimotoH/furigana) that uses [fugashi](https://github.com/polm/fugashi) instead of mecab-python3.
+
 Generate furigana(振り仮名) from Japanese
 
 It uses [MeCab](http://taku910.github.io/mecab/) (a Natural Language Toolkit) to split Japanese into words, and superscript it with furigana (振り仮名).
@@ -52,9 +55,13 @@ See https://pypi.python.org/pypi/mecab-python3/0.7 <br/>
 run below commands on ubuntu 
 ```
 sudo apt-get install libmecab-dev mecab mecab-ipadic-utf8
-sudo -H pip3 install mecab-python3
+sudo -H pip3 install fugashi
 sudo -H pip3 install jaconv
 ```
 
 # Conflict with Anaconda Python
 Please use Ubuntu's original python3, not to use with Anaconda Python3
+
+# See also
+- https://github.com/Ajatt-Tools/mecab_controller - Python MeCab wrapper, used in the [AJT Japanese Anki add-on](https://ankiweb.net/shared/info/1344485230)
+- https://github.com/CodeMonkeyNinja/mecab_furigana_rs - Rust MeCab wrapper to annotate furigana/romaji
