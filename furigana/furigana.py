@@ -90,48 +90,47 @@ def split_furigana(text, debug=False):
         if not origin:
             continue
 
-        if any(is_kanji(ch) for ch in origin):
-            if debug:
-                print(f'[DEBUG] {origin}')
-                print(f'[DEBUG]   {word.feature}')
+        if debug:
+            print(f'[DEBUG] {origin}')
+            print(f'[DEBUG]   {word.feature}')
 
+        if any(is_kanji(ch) for ch in origin):
             kana = word.feature.kana
             if kana:
                 hiragana = jaconv.kata2hira(kana)
+
                 for pair in split_okurigana(origin, hiragana):
                     ret += [pair]
             else:
                 ret += [(origin,)]
         else:
             ret += [(origin,)]
+
     return ret
 
 
-def print_html(text, **kwargs):
+def convert(text, format, **kwargs):
+    furigana_result = ''
+
     for pair in split_furigana(text, **kwargs):
-        if len(pair)==2:
+        if len(pair) == 2:
             kanji, hira = pair
-            print("<ruby><rb>{0}</rb><rt>{1}</rt></ruby>".
-                    format(kanji, hira), end='')
+            if format == 'html':
+                furigana_result += f"<ruby><rb>{kanji}</rb><rt>{hira}</rt></ruby>"
+            elif format == 'text':
+                furigana_result += f"{kanji}({hira})"
         else:
-            print(pair[0], end='')
-    print('')
+            hira = pair[0]
+            furigana_result += hira
 
-
-def print_plaintext(text, **kwargs):
-    for pair in split_furigana(text, **kwargs):
-        if len(pair)==2:
-            kanji,hira = pair
-            print("%s(%s)" % (kanji,hira), end='')
-        else:
-            print(pair[0], end='')
-    print('')
+    print(furigana_result)
+    print()
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--html', action='store_true')
-    parser.add_argument('--debug', action='store_true')
+    parser.add_argument('-d', '--debug', action='store_true')
     parser.add_argument('input')
     args = parser.parse_args()
 
@@ -143,9 +142,10 @@ def main():
 
     for line in text.split('\n'):
         if args.html:
-            print_html(line, debug=args.debug)
+            format = 'html'
         else:
-            print_plaintext(line, debug=args.debug)
+            format = 'text'
+        convert(line, format, debug=args.debug)
 
 
 if __name__ == '__main__':
