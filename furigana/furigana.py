@@ -1,10 +1,18 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import sys
-import MeCab
+import fugashi
+import ipadic
 import re
 import jaconv
 import unicodedata
+
+
+IpadicFeatures = fugashi.create_feature_wrapper(
+    'IpadicFeatures',
+    'pos1 pos2 pos3 pos4 cType cForm lemma kana pron'.split(),
+)
+tagger = fugashi.GenericTagger(ipadic.MECAB_ARGS, wrapper=IpadicFeatures)
 
 
 def is_kanji(ch):
@@ -75,46 +83,29 @@ def split_okurigana(text, hiragana):
 
 
 def split_furigana(text):
-    """ MeCab has a problem if used inside a generator ( use yield instead of return  )
-    The error message is:
-    ```
-    SystemError: <built-in function delete_Tagger> returned a result with an error set
-    ```
-    It seems like MeCab has bug in releasing resource
-    """
-    mecab = MeCab.Tagger("-Ochasen")
-    mecab.parse('') # 空でパースする必要がある
-    node = mecab.parseToNode(text)
     ret = []
-
-    while node is not None:
-        origin = node.surface # もとの単語を代入
+    for word in tagger(text):
+        origin = word.surface
         if not origin:
-            node = node.next
             continue
 
-        # originが空のとき、漢字以外の時はふりがなを振る必要がないのでそのまま出力する
-        if origin != "" and any(is_kanji(_) for _ in origin):
-            #sometimes MeCab can't give kanji reading, and make node-feature have less than 7 when splitted.
-            #bypass it and give kanji as isto avoid IndexError
-            if len(node.feature.split(",")) > 7:
-                kana = node.feature.split(",")[7] # 読み仮名を代入
+        if any(is_kanji(ch) for ch in origin):
+            kana = word.feature.kana
+            if kana:
+                hiragana = jaconv.kata2hira(kana)
+                for pair in split_okurigana(origin, hiragana):
+                    ret += [pair]
             else:
-                kana = node.surface
-            hiragana = jaconv.kata2hira(kana)
-            for pair in split_okurigana(origin, hiragana):
-                ret += [pair]
-        else:
-            if origin:
                 ret += [(origin,)]
-        node = node.next
+        else:
+            ret += [(origin,)]
     return ret
 
 
 def print_html(text):
     for pair in split_furigana(text):
         if len(pair)==2:
-            kanji,hira = pair
+            kanji, hira = pair
             print("<ruby><rb>{0}</rb><rt>{1}</rt></ruby>".
                     format(kanji, hira), end='')
         else:
@@ -126,7 +117,7 @@ def print_plaintext(text):
     for pair in split_furigana(text):
         if len(pair)==2:
             kanji,hira = pair
-            print("%s(%s)" % (kanja,hira), end='')
+            print("%s(%s)" % (kanji,hira), end='')
         else:
             print(pair[0], end='')
     print('')
