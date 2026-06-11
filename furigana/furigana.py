@@ -41,6 +41,10 @@ def split_okurigana(text, hiragana):
          * 出会(であ)う
          * 明(あか)るい
          * 駆(か)け抜(ぬ)け
+         * (か)け抜(ぬ)け
+         * 進(すす)め
+         * 戦(たた)い
+         * 温(あたた)かい
     """
     if is_hiragana(text[0]):
         yield from split_okurigana_reverse(text, hiragana)
@@ -67,7 +71,7 @@ def split_okurigana(text, hiragana):
                 break
             else:
                 if is_kanji(char):
-                    if ret[1] and hira == ret[1][-1]:
+                    if ret[1] and hira == ret[1][-1] and char != ret[0]:
                         text.pop(0)
                         yield ret[0], ''.join(ret[1][:-1])
                         yield char, hira
